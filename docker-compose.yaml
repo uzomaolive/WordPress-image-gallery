@@ -1,35 +1,68 @@
+# This configuration uses Docker secrets to securely manage sensitive data, such as 
+# database passwords, by storing them in external files and injecting them into 
+# containers in a secure manner. Instead of hardcoding passwords directly into 
+# environment variables (which could lead to security vulnerabilities, especially 
+# when sharing code), the secrets are managed as files and mounted into the container. 
+# This is a best practice for managing sensitive information in production environments.
+version: '3.8'
 services:
    db:
      image: mysql:latest
+     
+     # Defines a volume to persist MySQL data so that it can be retained between
+     # container restarts, preventing data loss.
      volumes:
        - db_data:/var/lib/mysql
+
+     # Here, instead of directly passing passwords as environment variables, 
+     # we use the _FILE suffix to tell Docker to read these values from files.
+     # These files are securely mounted into the container using Docker secrets.
      environment:
-       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
-       MYSQL_DATABASE: wordpress
-       MYSQL_USER: wordpress
-       MYSQL_PASSWORD_FILE: /run/secrets/db_password
+       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password   # MySQL root password stored securely as a file
+       MYSQL_DATABASE: wordpress   # Defines the name of the database to be created
+       MYSQL_USER: wordpress       # Defines the MySQL user for the WordPress database
+       MYSQL_PASSWORD_FILE: /run/secrets/db_password  # MySQL user password stored securely as a file
+
+     # Secrets are declared here. These correspond to files in the Docker secrets section
+     # and are mounted securely into the container.
      secrets:
        - db_root_password
        - db_password
 
    wordpress:
      depends_on:
-       - db
+       - db   # Ensures the database service (db) starts before the WordPress service
      image: wordpress:latest
+     
+     # Exposes port 8000 on the host and maps it to port 80 in the WordPress container.
+     # You can access WordPress by navigating to http://localhost:8000 on your browser.
      ports:
        - "8000:80"
+
+     # Similar to the db service, we use Docker secrets to inject the WordPress 
+     # database password into the container from a secure location (a mounted file). 
+     # This prevents the password from being exposed in plain text.
      environment:
-       WORDPRESS_DB_HOST: db:3306
-       WORDPRESS_DB_USER: wordpress
-       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+       WORDPRESS_DB_HOST: db:3306   # Specifies the database service and port (3306 is the default MySQL port)
+       WORDPRESS_DB_USER: wordpress # Database username used by WordPress
+       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password   # Securely inject the password from a file
+
+     # This service also uses secrets to inject the password securely.
      secrets:
        - db_password
 
+# Docker secrets section:
+# This section defines the Docker secrets. Each secret points to an external file
+# where the sensitive information is stored. Docker will securely inject these 
+# secrets into the appropriate containers as files, ensuring that the actual 
+# password content is not visible in the environment variables or in the container's logs.
 secrets:
    db_password:
-     file: db_password.txt
+     file: db_password.txt  # The MySQL user password is stored in this file outside the configuration.
    db_root_password:
-     file: db_root_password.txt
+     file: db_root_password.txt  # The MySQL root password is stored in this file outside the configuration.
 
+# This volume is used to persist the MySQL data, ensuring that database data is
+# retained even after the containers are stopped or restarted.
 volumes:
     db_data:
