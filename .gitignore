@@ -1,0 +1,20 @@
+# Ignore Docker secrets (password files)
+db_password.txt
+db_root_password.txt
+
+# Ignore Docker volumes (MySQL data)
+data/
+
+# # Ignore WordPress wp-content directory if you want to avoid tracking uploaded files, plugins, or themes.
+# wp-content/uploads/
+# wp-content/plugins/
+# wp-content/themes/
+
+# Ignore node_modules (if you're using Node.js in your project)
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore system files (e.g., for Mac and Linux users)
+.DS_Store
